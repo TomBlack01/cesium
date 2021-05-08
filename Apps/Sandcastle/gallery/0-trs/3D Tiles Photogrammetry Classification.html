@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+    <!-- Use Chrome Frame in IE -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Sample photogrammetry and classification datasets both rendered with 3D Tiles."
+    />
+    <meta
+      name="cesium-sandcastle-labels"
+      content="Showcases, 3D Tiles,trs-scenemodeswitch"
+    />
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script
+      type="text/javascript"
+      src="../../../Build/CesiumUnminified/Cesium.js"
+      nomodule
+    ></script>
+    <script type="module" src="../load-cesium-es6.js"></script>
+    <script src="../jquery.min.js"></script>
+  </head>
+
+  <body
+    class="sandcastle-loading"
+    data-sandcastle-bucket="bucket-requirejs.html"
+  >
+    <style>
+      @import url(../templates/bucket.css);
+    </style>
+    <div id="cesiumContainer" class="fullSize"></div>
+    <div id="loadingOverlay">
+      <h1>Loading...</h1>
+    </div>
+    <div id="toolbar"></div>
+    <div id="toolbar-trs" style="position: absolute; left: 5px; top: 55px">
+      <select id="imageryOptions" class="selectpicker show-tick form-control">
+        <!--<option disabled selected value>&#45;&#45;选择服务类型&#45;&#45;</option>-->
+        <option value="WGS">自定义影像&地形-平面场景</option>
+        <option selected value="MEC">倾斜数据-三维场景</option>
+      </select>
+    </div>
+    <script id="cesium_sandcastle_script">
+      function startup(Cesium) {
+        "use strict";
+        //Sandcastle_Begin
+        // An example of using a b3dm tilset to classify another b3dm tileset.
+        window.viewer = new Cesium.Viewer("cesiumContainer", {
+          terrainProvider: Cesium.createWorldTerrain(),
+        });
+
+        // A normal b3dm tileset of photogrammetry
+        var tileset = new Cesium.Cesium3DTileset({
+          url: Cesium.IonResource.fromAssetId(40866),
+        });
+        viewer.scene.primitives.add(tileset);
+        viewer.zoomTo(tileset);
+
+        var classifcationTilesetUrl =
+          "../../SampleData/Cesium3DTiles/Classification/Photogrammetry/tileset.json";
+        // A b3dm tileset used to classify the photogrammetry tileset
+        var classificationTileset = new Cesium.Cesium3DTileset({
+          url: classifcationTilesetUrl,
+          classificationType: Cesium.ClassificationType.CESIUM_3D_TILE,
+        });
+        classificationTileset.style = new Cesium.Cesium3DTileStyle({
+          color: "rgba(255, 0, 0, 0.5)",
+        });
+        window.cTileset = viewer.scene.primitives.add(classificationTileset);
+
+        // The same b3dm tileset used for classification, but rendered normally for comparison.
+        var nonClassificationTileset = new Cesium.Cesium3DTileset({
+          url: classifcationTilesetUrl,
+          show: false,
+        });
+        nonClassificationTileset.style = new Cesium.Cesium3DTileStyle({
+          color: "rgba(255, 0, 0, 0.5)",
+        });
+        window.nocTileset = viewer.scene.primitives.add(
+          nonClassificationTileset
+        );
+
+        Sandcastle.addToggleButton("Show classification", true, function (
+          checked
+        ) {
+          classificationTileset.show = checked;
+          nonClassificationTileset.show = !checked;
+        });
+        //添加下拉菜单，点击选项切换地图服务
+        $("#imageryOptions").change(function () {
+          var value = $(this).val();
+          if (value == "WGS") {
+            viewer.scene.camera.setView({
+              destination: Cesium.Cartesian3.fromDegrees(
+                -75.59670825285848,
+                40.03572517367026,
+                270.40531821331771
+              ),
+              orientation: {
+                heading: 6.283185307179586,
+                pitch: -0.5000535089591893,
+                roll: 6.28318530717958,
+              },
+            });
+            viewer.scene.mode = Cesium.SceneMode.COLUMBUS_VIEW;
+            //平面场景
+          } else if (value == "MEC") {
+            // Cesium.when(promise, function(layers) {
+            viewer.scene.mode = Cesium.SceneMode.SCENE3D;
+            //三维场景
+            //设置相机位置，定位至模型
+            viewer.scene.camera.setView({
+              //将经度、纬度、高度的坐标转换为笛卡尔坐标
+              destination: Cesium.Cartesian3.fromDegrees(
+                -75.59670825285848,
+                40.03572517367026,
+                270.40531821331771
+              ),
+              orientation: {
+                heading: 6.283185307179586,
+                pitch: -0.5000535089591893,
+                roll: 6.28318530717958,
+              },
+            });
+            // });
+          }
+        });
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+      }
+      if (typeof Cesium !== "undefined") {
+        window.startupCalled = true;
+        startup(Cesium);
+      }
+    </script>
+  </body>
+</html>
